@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Dashboard</h1>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Students</h5>
+                    <h2 class="display-4">{{ total_students }}</h2>
+                    <p class="card-text">Registered in the system</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Courses</h5>
+                    <h2 class="display-4">{{ total_courses }}</h2>
+                    <p class="card-text">Available courses</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Attendance</h5>
+                    <h2 class="display-4">{{ attendance_percentage }}%</h2>
+                    <p class="card-text">Average attendance today</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="{{ url_for('add_student') }}" class="btn btn-primary me-md-2">
+                    <i class="bi bi-person-plus"></i> Add New Student
+                </a>
+                <a href="{{ url_for('attendance') }}" class="btn btn-success me-md-2">
+                    <i class="bi bi-calendar-plus"></i> Mark Attendance
+                </a>
+                <a href="{{ url_for('reports') }}" class="btn btn-info text-white">
+                    <i class="bi bi-file-earmark-text"></i> Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

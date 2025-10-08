@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Attendance Report</h1>
+        <a href="{{ url_for('reports') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+    
+    {% if report_data.type == 'student' %}
+    <!-- Student-wise Report -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Student Report: {{ report_data.student.name }} ({{ report_data.student.roll_number }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ report_data.total_classes }}</h3>
+                            <p class="text-muted mb-0">Total Classes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ report_data.present }}</h3>
+                            <p class="text-muted mb-0">Present</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="text-danger">{{ report_data.absent }}</h3>
+                            <p class="text-muted mb-0">Absent</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="text-info">{{ report_data.percentage }}%</h3>
+                            <p class="text-muted mb-0">Attendance %</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if report_data.records %}
+            <h5>Attendance Records</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Course</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in report_data.records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.course.name }} ({{ record.course.code }})</td>
+                            <td>
+                                {% if record.status %}
+                                    <span class="badge bg-success">Present</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-muted text-center">No attendance records found for the selected period.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% elif report_data.type == 'course' %}
+    <!-- Course-wise Report -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5>Course Report: {{ report_data.course.name }} ({{ report_data.course.code }})</h5>
+        </div>
+        <div class="card-body">
+            {% if report_data.date_wise %}
+            <h5>Date-wise Attendance</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Total Students</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for date, stats in report_data.date_wise.items() %}
+                        <tr>
+                            <td>{{ date }}</td>
+                            <td>{{ stats.total }}</td>
+                            <td class="text-success">{{ stats.present }}</td>
+                            <td class="text-danger">{{ stats.total - stats.present }}</td>
+                            <td>
+                                {% set percentage = (stats.present / stats.total * 100) if stats.total > 0 else 0 %}
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ percentage }}%">
+                                        {{ "%.1f"|format(percentage) }}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-muted text-center">No attendance records found for the selected period.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% elif report_data.type == 'overall' %}
+    <!-- Overall Report -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5>Overall Attendance Report</h5>
+        </div>
+        <div class="card-body">
+            {% if report_data.student_stats %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Total Classes</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in report_data.student_stats %}
+                        <tr>
+                            <td>{{ stat.student.roll_number }}</td>
+                            <td>{{ stat.student.name }}</td>
+                            <td>{{ stat.total }}</td>
+                            <td class="text-success">{{ stat.present }}</td>
+                            <td class="text-danger">{{ stat.absent }}</td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar {% if stat.percentage >= 75 %}bg-success{% elif stat.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" style="width: {{ stat.percentage }}%">
+                                        {{ stat.percentage }}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-muted text-center">No attendance records found.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

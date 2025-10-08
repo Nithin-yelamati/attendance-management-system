@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Generate Reports</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Report Configuration</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('generate_report') }}">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="report_type" class="form-label">Report Type</label>
+                        <select class="form-select" id="report_type" name="report_type" required onchange="toggleFields()">
+                            <option value="">Select Report Type</option>
+                            <option value="student">Student-wise Report</option>
+                            <option value="course">Course-wise Report</option>
+                            <option value="overall">Overall Attendance Report</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3" id="student_field" style="display: none;">
+                    <div class="col-md-6">
+                        <label for="student_id" class="form-label">Select Student</label>
+                        <select class="form-select" id="student_id" name="student_id">
+                            <option value="">Select Student</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">{{ student.name }} ({{ student.roll_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3" id="course_field" style="display: none;">
+                    <div class="col-md-6">
+                        <label for="course_id" class="form-label">Select Course (Optional)</label>
+                        <select class="form-select" id="course_id" name="course_id">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="start_date" class="form-label">Start Date (Optional)</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="end_date" class="form-label">End Date (Optional)</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date">
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-text"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const reportType = document.getElementById('report_type').value;
+    const studentField = document.getElementById('student_field');
+    const courseField = document.getElementById('course_field');
+    const studentSelect = document.getElementById('student_id');
+    const courseSelect = document.getElementById('course_id');
+    
+    // Hide all fields first
+    studentField.style.display = 'none';
+    courseField.style.display = 'none';
+    studentSelect.required = false;
+    courseSelect.required = false;
+    
+    // Show relevant fields based on report type
+    if (reportType === 'student') {
+        studentField.style.display = 'block';
+        courseField.style.display = 'block';
+        studentSelect.required = true;
+    } else if (reportType === 'course') {
+        courseField.style.display = 'block';
+        courseSelect.required = true;
+    } else if (reportType === 'overall') {
+        courseField.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h4>Camera Attendance - {{ course.name }} ({{ course.code }})</h4>
+            <p class="mb-0 text-muted">Position students in front of the camera to mark attendance automatically</p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="text-center mb-4">
+                        <video id="video" width="640" height="480" autoplay></video>
+                        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button id="captureBtn" class="btn btn-success btn-lg">
+                            <i class="bi bi-camera-video"></i> Capture & Mark Attendance
+                        </button>
+                        <a href="{{ url_for('attendance') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5>Recognized Students</h5>
+                        </div>
+                        <div class="card-body" id="recognizedList">
+                            <p class="text-muted text-center">No students recognized yet</p>
+                        </div>
+                    </div>
+                    
+                    <div id="message" class="alert mt-3" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const captureBtn = document.getElementById('captureBtn');
+const messageDiv = document.getElementById('message');
+const recognizedList = document.getElementById('recognizedList');
+const courseId = {{ course.id }};
+
+// Access webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+    })
+    .catch(err => {
+        showMessage('Error accessing camera: ' + err.message, 'danger');
+    });
+
+captureBtn.addEventListener('click', function() {
+    // Draw video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, 640, 480);
+    
+    // Convert canvas to base64
+    const imageData = canvas.toDataURL('image/jpeg');
+    
+    // Show loading
+    captureBtn.disabled = true;
+    captureBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Recognizing...';
+    
+    // Send to server
+    fetch('/recognize_faces', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            course_id: courseId,
+            image: imageData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(`Successfully recognized ${data.recognized_count} student(s)`, 'success');
+            displayRecognizedStudents(data.students);
+        } else {
+            showMessage(data.message, 'warning');
+        }
+        captureBtn.disabled = false;
+        captureBtn.innerHTML = '<i class="bi bi-camera-video"></i> Capture & Mark Attendance';
+    })
+    .catch(error => {
+        showMessage('Error: ' + error.message, 'danger');
+        captureBtn.disabled = false;
+        captureBtn.innerHTML = '<i class="bi bi-camera-video"></i> Capture & Mark Attendance';
+    });
+});
+
+function displayRecognizedStudents(students) {
+    if (students.length === 0) {
+        recognizedList.innerHTML = '<p class="text-muted text-center">No students recognized</p>';
+        return;
+    }
+    
+    let html = '<ul class="list-group">';
+    students.forEach(student => {
+        const badgeClass = student.status === 'marked' ? 'bg-success' : 'bg-warning';
+        const statusText = student.status === 'marked' ? 'Marked' : 'Already Marked';
+        html += `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${student.name}</strong><br>
+                    <small class="text-muted">${student.roll_number}</small>
+                </div>
+                <span class="badge ${badgeClass}">${statusText}</span>
+            </li>
+        `;
+    });
+    html += '</ul>';
+    recognizedList.innerHTML = html;
+}
+
+function showMessage(message, type) {
+    messageDiv.className = 'alert alert-' + type;
+    messageDiv.textContent = message;
+    messageDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+</script>
+{% endblock %}
